@@ -1,0 +1,23 @@
+name: WINDOWS TAILSCALE RDP
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Enable RDP
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd1234" -Force)
+    - name: Install Tailscale
+      uses: tailscale/github-action@v3
+      with:
+        authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+    - name: Keep Alive
+      run: |
+        $ip = tailscale ip -4
+        echo "IP Tailscale: $ip"
+        echo "Username: runneradmin"
+        echo "Password: P@ssw0rd1234"
+        while ($true) { Write-Output "$(Get-Date) - RDP Running $ip"; Start-Sleep 300 }
